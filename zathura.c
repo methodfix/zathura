@@ -712,20 +712,26 @@ sc_scroll(Argument *argument)
   gdouble value      = gtk_adjustment_get_value(adjustment);
   gdouble max        = gtk_adjustment_get_upper(adjustment) - view_size;
 
-  Argument navigate_arg;
+  int next_page = Zathura.PDF.page_number + 1;
+  int previous_page = Zathura.PDF.page_number - 1;
+
   switch (argument->n) {
     case TOP:
-      if (value == 0) {
-          navigate_arg.n = PREVIOUS;
-          sc_navigate(&navigate_arg);
+      if ((value == 0 && previous_page >= 0)) {
+          set_page(Zathura.PDF.page_number - 1);
+          gtk_adjustment_set_value(adjustment, max);
+          draw();
+          update_status();
       } else {
         gtk_adjustment_set_value(adjustment, 0);
       }
       break;
     case BOTTOM:
-      if (value == max) {
-          navigate_arg.n = NEXT;
-          sc_navigate(&navigate_arg);
+      if ((value >= max && next_page <= Zathura.PDF.number_of_pages)) {
+          set_page(Zathura.PDF.page_number + 1);
+          gtk_adjustment_set_value(adjustment, 0);
+          draw();
+          update_status();
       } else {
         gtk_adjustment_set_value(adjustment, max);
       }
@@ -734,9 +740,11 @@ sc_scroll(Argument *argument)
       gtk_adjustment_set_value(adjustment, (value - SCROLL_STEP) < 0 ? 0 : (value - SCROLL_STEP));
       break;
     case DOWN:
-      if ((value - SCROLL_STEP) < 0) {
-          navigate_arg.n = PREVIOUS;
-          sc_navigate(&navigate_arg);
+      if ((value - SCROLL_STEP) < 0 && previous_page >= 0) {
+          set_page(Zathura.PDF.page_number - 1);
+          gtk_adjustment_set_value(adjustment, max);
+          draw();
+          update_status();
       } else {
         gtk_adjustment_set_value(adjustment, value - SCROLL_STEP);
       }
@@ -745,14 +753,17 @@ sc_scroll(Argument *argument)
       gtk_adjustment_set_value(adjustment, (value + SCROLL_STEP) > max ? max : (value + SCROLL_STEP));
       break;
     case UP:
-      if ((value + SCROLL_STEP) > max) {
-          navigate_arg.n = NEXT;
-          sc_navigate(&navigate_arg);
+      if ((value + SCROLL_STEP) > max && next_page <= Zathura.PDF.number_of_pages) {
+          set_page(Zathura.PDF.page_number + 1);
+          gtk_adjustment_set_value(adjustment, 0);
+          draw();
+          update_status();
       } else {
         gtk_adjustment_set_value(adjustment, value + SCROLL_STEP);
       }
       break;
   }
+
 }
 
 void
@@ -767,11 +778,10 @@ sc_navigate(Argument *argument)
     new_page = abs( (new_page + number_of_pages - 1) % number_of_pages);
 
   set_page(new_page);
+  GtkAdjustment* adjustment;
+  adjustment = gtk_scrolled_window_get_vadjustment(Zathura.view);
+  gtk_adjustment_set_value(adjustment, 0);
 
-  Argument reset;
-  reset.n = TOP;
-  sc_scroll(&reset);
-  
   draw();
 
   update_status();
