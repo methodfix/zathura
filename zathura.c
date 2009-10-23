@@ -712,14 +712,47 @@ sc_scroll(Argument *argument)
   gdouble value      = gtk_adjustment_get_value(adjustment);
   gdouble max        = gtk_adjustment_get_upper(adjustment) - view_size;
 
-  if( (argument->n == LEFT) || (argument->n == DOWN))
-    gtk_adjustment_set_value(adjustment, (value - SCROLL_STEP) < 0 ? 0 : (value - SCROLL_STEP));
-  else if (argument->n == TOP)
-    gtk_adjustment_set_value(adjustment, 0);
-  else if(argument->n == BOTTOM)
-    gtk_adjustment_set_value(adjustment, max);
-  else
-    gtk_adjustment_set_value(adjustment, (value + SCROLL_STEP) > max ? max : (value + SCROLL_STEP));
+  Argument navigate_arg;
+  switch (argument->n) {
+    case TOP:
+      if (value == 0) {
+          navigate_arg.n = PREVIOUS;
+          sc_navigate(&navigate_arg);
+      } else {
+        gtk_adjustment_set_value(adjustment, 0);
+      }
+      break;
+    case BOTTOM:
+      if (value == max) {
+          navigate_arg.n = NEXT;
+          sc_navigate(&navigate_arg);
+      } else {
+        gtk_adjustment_set_value(adjustment, max);
+      }
+      break;
+    case LEFT:
+      gtk_adjustment_set_value(adjustment, (value - SCROLL_STEP) < 0 ? 0 : (value - SCROLL_STEP));
+      break;
+    case DOWN:
+      if ((value - SCROLL_STEP) < 0) {
+          navigate_arg.n = PREVIOUS;
+          sc_navigate(&navigate_arg);
+      } else {
+        gtk_adjustment_set_value(adjustment, value - SCROLL_STEP);
+      }
+      break;
+    case RIGHT:
+      gtk_adjustment_set_value(adjustment, (value + SCROLL_STEP) > max ? max : (value + SCROLL_STEP));
+      break;
+    case UP:
+      if ((value + SCROLL_STEP) > max) {
+          navigate_arg.n = NEXT;
+          sc_navigate(&navigate_arg);
+      } else {
+        gtk_adjustment_set_value(adjustment, value + SCROLL_STEP);
+      }
+      break;
+  }
 }
 
 void
