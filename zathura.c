@@ -712,13 +712,16 @@ sc_scroll(Argument *argument)
   gdouble value      = gtk_adjustment_get_value(adjustment);
   gdouble max        = gtk_adjustment_get_upper(adjustment) - view_size;
 
-  int next_page = Zathura.PDF.page_number + 1;
-  int previous_page = Zathura.PDF.page_number - 1;
+  int number_of_pages = poppler_document_get_n_pages(Zathura.PDF.document);
+  int new_page = Zathura.PDF.page_number;
+
+  int next_page = abs( (new_page + number_of_pages + 1) % number_of_pages);
+  int previous_page = abs( (new_page + number_of_pages - 1) % number_of_pages);
 
   switch (argument->n) {
     case TOP:
       if ((value == 0 && previous_page >= 0)) {
-          set_page(Zathura.PDF.page_number - 1);
+          set_page(previous_page);
           gtk_adjustment_set_value(adjustment, max);
           draw();
           update_status();
@@ -728,7 +731,7 @@ sc_scroll(Argument *argument)
       break;
     case BOTTOM:
       if ((value >= max && next_page <= Zathura.PDF.number_of_pages)) {
-          set_page(Zathura.PDF.page_number + 1);
+          set_page(next_page);
           gtk_adjustment_set_value(adjustment, 0);
           draw();
           update_status();
@@ -741,7 +744,7 @@ sc_scroll(Argument *argument)
       break;
     case DOWN:
       if ((value - SCROLL_STEP) < 0 && previous_page >= 0) {
-          set_page(Zathura.PDF.page_number - 1);
+          set_page(previous_page);
           gtk_adjustment_set_value(adjustment, max);
           draw();
           update_status();
@@ -754,7 +757,7 @@ sc_scroll(Argument *argument)
       break;
     case UP:
       if ((value + SCROLL_STEP) > max && next_page <= Zathura.PDF.number_of_pages) {
-          set_page(Zathura.PDF.page_number + 1);
+          set_page(next_page);
           gtk_adjustment_set_value(adjustment, 0);
           draw();
           update_status();
