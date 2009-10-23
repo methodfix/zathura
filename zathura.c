@@ -1300,7 +1300,46 @@ cb_draw(GtkWidget *widget, gpointer data)
 {
   gdk_window_clear(widget->window);
   cairo_t *cairo = gdk_cairo_create(widget->window);
-  cairo_set_source_surface(cairo, Zathura.PDF.surface, 0, 0);
+
+  /* Center the PDF if it is smaller than the window. */
+  double page_width, page_height, width, height;
+  poppler_page_get_size(Zathura.PDF.page, &page_width, &page_height);
+
+  if(Zathura.PDF.rotate == 0 || Zathura.PDF.rotate == 180)
+  {
+    width  = page_width  * Zathura.PDF.scale;
+    height = page_height * Zathura.PDF.scale;
+  }
+  else
+  {
+    width  = page_height * Zathura.PDF.scale;
+    height = page_width  * Zathura.PDF.scale;
+  }
+
+  int window_x, window_y;
+  gdk_drawable_get_size(widget->window, &window_x, &window_y);
+
+  double offset_x, offset_y;
+
+  if (window_x > width)
+  {
+      offset_x = (window_x - width) / 2;
+  }
+  else
+  {
+      offset_x = 0;
+  }
+
+  if (window_y > height)
+  {
+      offset_y = (window_y - height) / 2;
+  }
+  else
+  {
+      offset_y = 0;
+  }
+
+  cairo_set_source_surface(cairo, Zathura.PDF.surface, offset_x, offset_y);
   cairo_paint(cairo);
   cairo_destroy(cairo);
 }
