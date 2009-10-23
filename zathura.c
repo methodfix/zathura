@@ -773,6 +773,13 @@ sc_adjust_window(Argument *argument)
   view_size  = gtk_adjustment_get_page_size(adjustment);
   poppler_page_get_size(Zathura.PDF.page, &page_width, &page_height);
 
+  // If document is on its side, then width is height and vice versa.
+  if ((Zathura.PDF.rotate == 90) || (Zathura.PDF.rotate == 270)) {
+      double swap = page_width;
+      page_width = page_height;
+      page_height = swap;
+  }
+
   if(argument->n == ADJUST_WIDTH)
     Zathura.PDF.scale = view_size / page_height;
   else
@@ -1527,7 +1534,7 @@ main(int argc, char* argv[])
   gtk_widget_show_all(GTK_WIDGET(Zathura.window));
  
   Argument arg;
-  arg.n = ADJUST_BESTFIT;
+  arg.n = ADJUST_WIDTH;
   sc_adjust_window(&arg);
 
   gtk_main();
